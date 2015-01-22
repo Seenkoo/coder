@@ -3,9 +3,12 @@ table td{
 	min-height: 20px;
 	text-align: center;
 }
+<<<<<<< HEAD
 td.code{
 	text-align: left;
 }
+=======
+>>>>>>> FETCH_HEAD
 div.empty{
 	display: none;
 }

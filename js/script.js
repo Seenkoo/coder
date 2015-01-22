@@ -58,7 +58,10 @@ $(document).ready(function(){
 		// Кодируем символы алгоритмом Шеннона-Фано
 
 		function shannon_fano(arr, n){
+<<<<<<< HEAD
 			var encoded = arr.slice(0);
+=======
+>>>>>>> FETCH_HEAD
 			var csl = 0;
 			var nsl = 0;
 			var cv = 0;
@@ -67,12 +70,20 @@ $(document).ready(function(){
 			var nabs = 0;
 			var csr = 0;
 			var nsr = 0;
+<<<<<<< HEAD
 			var end = encoded.length-1;
+=======
+			var end = arr.length-1;
+>>>>>>> FETCH_HEAD
 			var start = 0;
 			var found = 0;
 			var csum = n;
 			var splitters = [];
+<<<<<<< HEAD
 			while(found < encoded.length-1){
+=======
+			while(found < arr.length-1){
+>>>>>>> FETCH_HEAD
 				for(var i = start; i <= end; i++){
 					if(start == end){
 						found += 1;
@@ -82,8 +93,13 @@ $(document).ready(function(){
 						csum = splitters[i][1];
 						break;
 					}
+<<<<<<< HEAD
 					cv = encoded[i][1];
 					nv = encoded[i+1][1];
+=======
+					cv = arr[i][1];
+					nv = arr[i+1][1];
+>>>>>>> FETCH_HEAD
 					csl += cv;
 					nsl = csl + nv;
 					csr = csum - csl;
@@ -96,7 +112,11 @@ $(document).ready(function(){
 						splitters[i] = [end, csum - csl];
 						csum = csl;
 						for(var m = start; m <= end; m++){
+<<<<<<< HEAD
 							encoded[m][2] += (m <= i)?"0":"1";
+=======
+							arr[m][2] += (m <= i)?"0":"1";
+>>>>>>> FETCH_HEAD
 						}
 						csl = 0;
 						end = i;
@@ -166,6 +186,7 @@ $(document).ready(function(){
 			}
 			return encodedArr;
 		}
+<<<<<<< HEAD
 		hman = huffman(sortedDesc, n);
 		console.log(hman);
 
@@ -182,5 +203,22 @@ $(document).ready(function(){
 		$("#huffman b.a").text("Средний вес символа = " + a);
 
 		$("#huffman").removeClass("empty");
+=======
+		shfano = shannon_fano(sortedDesc, n);
+
+		// Выводим таблицу Шеннон-Фано и считаем вес сообщения & средний вес символа
+		var t = 0;
+		var a = 0;
+		shfano.forEach(function(value, index, array){
+			t += value[1]*(value[2].length);
+			$("#shannon-fano table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td></tr>');
+		});
+		a = (t/n).toFixed(3);
+
+		$("#shannon-fano b.t").text("Вес сообщения = " + t);
+		$("#shannon-fano b.a").text("Средний вес символа = " + a);
+
+		$("#shannon-fano").removeClass("empty");
+>>>>>>> FETCH_HEAD
 	});
 });
