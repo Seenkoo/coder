@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>ИСТ</title>
+	<link rel="stylesheet" href="css/style.css">
+	<script src="js/jquery-1.11.2.min.js"></script>
+	<script src="js/script.js"></script>
+</head>
+<body>
+	<label>Заданный текст:<br>
+	<textarea name="text" id="text" cols="50" rows="10">аааааббббвввггдд</textarea></label>
+	<br>
+	<button id="calc">Рассчитать</button>
+	<div id="result">
+		<div id="alphabet" class="empty">
+			<i>Алфавит</i>
+			<br>
+			<b class="n"></b>
+			<br>
+			<b class="m"></b>
+			<br>
+			<table border=2>
+				<tr class="symbol"></tr>
+				<tr class="freq"></tr>
+			</table>
+		</div>
+		<div id="hartley" class="empty">
+			<i>Формула Хартли</i><span> (<i>n*log<sub>2</sub>m</i>)</span>
+			<br>
+			<b class="i"></b>
+			<br>
+			<b class="s"></b>
+		</div>
+		<div id="shannon" class="empty">
+			<i>Формула Шеннона</i><span> (<i>-<ruby>∑<rt>n</rt></ruby><sub>i</sub>p<sub>i</sub>log<sub>2</sub>p<sub>i</sub></i>)</span>
+			<br>
+			<b class="s"></b>
+		</div>
+<!-- 		<div id="shannon-fano" class="empty">
+			<i>Кодирование алгоритмом Шеннона-Фано</i>
+			<br>
+		</div> -->
+	</div>
+</body>
+</html>
