@@ -13,7 +13,7 @@ $(document).ready(function(){
 			var symbolRegex = '['+alphabet[i]+']';
 			alphabetFreq.push([alphabet[i],text.match(new RegExp(symbolRegex,'g')).length, '']);
 		};
-		sortedDesc = alphabetFreq;
+		sortedDesc = alphabetFreq.slice(0);
 		sortedDesc.sort(function(a, b){
 			if(a[1] > b[1]){
 				return -1;
@@ -56,46 +56,139 @@ $(document).ready(function(){
 		$("#shannon").removeClass("empty");
 
 		// Кодируем символы алгоритмом Шеннона-Фано
-		var shfano = sortedDesc;
 
-		function shannon_fano(arr, t){
+		function shannon_fano(arr, n){
+			var encoded = arr.slice(0);
 			var csl = 0;
-			var end = arr.length-1;
+			var nsl = 0;
+			var cv = 0;
+			var nv = 0;
+			var cabs = 0;
+			var nabs = 0;
+			var csr = 0;
+			var nsr = 0;
+			var end = encoded.length-1;
 			var start = 0;
 			var found = 0;
-			while(found < 2){
-				for(var i = start; i < end; i++){
+			var csum = n;
+			var splitters = [];
+			while(found < encoded.length-1){
+				for(var i = start; i <= end; i++){
 					if(start == end){
-						end = arr.length-1;
-						start++;
-						found++;
+						found += 1;
+						start = end + 1;
+						end = splitters[i][0];
+						csl = 0;
+						csum = splitters[i][1];
 						break;
 					}
-					var cv = arr[i][1];
-					var nv = arr[i+1][1];
+					cv = encoded[i][1];
+					nv = encoded[i+1][1];
 					csl += cv;
-					var csr = t - csl;
-					var nsl = csl + nv;
-					var nsr = t - nsl;
-					var cabs = Math.abs(csl-csr);
-					var nabs = Math.abs(nsl-nsr);
-					if(cabs > nabs){
+					nsl = csl + nv;
+					csr = csum - csl;
+					nsr = csum - nsl;
+					cabs = Math.abs(csl-csr);
+					nabs = Math.abs(nsl-nsr);
+					if(cabs >= nabs){
 						continue;
 					}else{
-						t = csl;
-						start = 0;
-						end = i;
-						for(var m = 0; m < arr.length; m++){
-							arr[m][2] += (m <= i)?"0":"1";
+						splitters[i] = [end, csum - csl];
+						csum = csl;
+						for(var m = start; m <= end; m++){
+							encoded[m][2] += (m <= i)?"0":"1";
 						}
+						csl = 0;
+						end = i;
 						break;
 					}
 				}
 			}
-			return arr;
+			return encoded;
 		}
+		var shfano = shannon_fano(sortedDesc, n);
+		// Выводим таблицу Шеннона-Фано и считаем вес сообщения & средний вес символа
+		var t = 0;
+		var a = 0;
+		shfano.forEach(function(value, index, array){
+			t += value[1]*(value[2].length);
+			$("#shannon-fano table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td></tr>');
+		});
+		a = (t/n).toFixed(3);
 
-		shfano = shannon_fano(sortedDesc, n);
-		console.log(shfano);
+		$("#shannon-fano b.t").text("Вес сообщения = " + t);
+		$("#shannon-fano b.a").text("Средний вес символа = " + a);
+
+		$("#shannon-fano").removeClass("empty");
+
+		// Кодируем символы алгоритмом Хаффмана
+
+		function huffman(arr, n){
+			var tree = arr.slice(0);
+			var encodedObj = (function(arr){
+							var rv = {};
+							for (var i = 0; i < arr.length; i++){
+								rv[arr[i][0]] = {index:i,code:''};
+							}
+							return rv;
+							})(arr);
+			var encodedArr = arr.slice(0);
+			var leaves = [];
+			// ^CANVAS
+			var canvas = document.getElementById('tree');
+			canvas.width = m*30;
+			canvas.height = m*30;
+			var ctx = canvas.getContext('2d');
+			ctx.font = "20px Trebuchet";
+			for (var i = 0; i <= sortedDesc.length - 1; i++) {
+				ctx.strokeRect((i*30)+3, canvas.height-50, 25, 50);sortedDesc[i]
+				ctx.fillText(sortedDesc[i][0], (i*30)+8, canvas.height-30);
+				ctx.fillText(sortedDesc[i][1], (i*30)+5, canvas.height-10);
+			};
+			// $CANVAS
+			while(tree.length > 1){
+				var p1 = tree.pop();
+				var p2 = tree.pop();
+				var symbols = p1[0]+p2[0];
+				var weight = p1[1]+p2[1];
+				var leaf = [symbols, weight];
+				tree.push(leaf);
+				leaves.push(leaf);
+				tree.sort(function(a, b){
+					if(a[1] > b[1]){
+						return -1;
+					}
+					if(a[1] < b[1]){
+						return 1;
+					}
+					return 0;
+				});
+				p1[0].split("").forEach(function(value, index, array){
+					encodedObj[value].code = "0" + encodedObj[value].code;
+				});
+				p2[0].split("").forEach(function(value, index, array){
+					encodedObj[value].code = "1" + encodedObj[value].code;
+				});
+			}
+			for(var sym in encodedObj){
+				encodedArr[encodedObj[sym].index][2] = encodedObj[sym].code;
+			}
+			return encodedArr;
+		}
+		var hman = huffman(sortedDesc, n);
+
+		// Выводим таблицу Хаффмана и считаем вес сообщения & средний вес символа
+		var t = 0;
+		var a = 0;
+		hman.forEach(function(value, index, array){
+			t += value[1]*(value[2].length);
+			$("#huffman table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td></tr>');
+		});
+		a = (t/n).toFixed(3);
+
+		$("#huffman b.t").text("Вес сообщения = " + t);
+		$("#huffman b.a").text("Средний вес символа = " + a);
+
+		$("#huffman").removeClass("empty");
 	});
 });
