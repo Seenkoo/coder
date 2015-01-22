@@ -1,9 +1,12 @@
-#alphabet table td{
+table td{
 	min-width: 20px;
 	min-height: 20px;
 	text-align: center;
 }
-#hartley.empty,#shannon.empty,#alphabet.empty{
+td.code{
+	text-align: left;
+}
+div.empty{
 	display: none;
 }
 #alphabet table tr.symbol td{
