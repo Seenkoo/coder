@@ -3,7 +3,7 @@
 	min-height: 20px;
 	text-align: center;
 }
-#hartley.empty,#shannon.empty,#alphabet.empty{
+div.empty{
 	display: none;
 }
 #alphabet table tr.symbol td{
