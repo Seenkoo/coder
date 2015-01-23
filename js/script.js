@@ -145,6 +145,8 @@ $(document).ready(function(){
 							return rv;
 							})(arr);
 			var encodedArr = arr.slice(0);
+			var maxSum = 0;
+
 			var canvas = document.getElementById('tree');
 			canvas.width = arr.length*40;
 			canvas.height = Math.ceil((n/arr.length)+(arr[1][2].length) + 1)*125;
@@ -161,6 +163,9 @@ $(document).ready(function(){
 				ctx.strokeRect(symX, symY, symW, 50);
 				ctx.fillText(tree[i][0], symX+(symW/2), symY+20);
 				ctx.fillText(tree[i][1], symX+(symW/2), symY+40);
+				if(tree[i][1] > maxSum){
+					maxSum = tree[i][1];
+				}
 			};
 			var rows = [];
 			while(tree.length > 1){
@@ -174,8 +179,7 @@ $(document).ready(function(){
 				var leafWeight = p1[1]+p2[1];
 
 				var leafW = (((leafSymbols.length * symSize)/2) + leafSymbols.length*2);
-				// var leafX = (leftB[3][0] + ((rightB[3][0]-leftB[3][0])/2));
-				var leafX = leftB[3][3] + (rightB[3][3]-leftB[3][3])/4;
+				var leafX = ((leftB[3][3] + rightB[3][3])/2) - (leafW/2);
 				var leafY = Math.min(p1[3][1], p2[3][1]) - 50;
 				var leafM = leafX + (leafW/2);
 				var leafCoords = [leafX, leafY-50, leafW, leafM];
@@ -186,7 +190,6 @@ $(document).ready(function(){
 				ctx.lineTo(leafM, leafY);
 				ctx.closePath();
 				ctx.stroke();
-				// var textX0 = (leafX + (leafW/2) + leftB[3][0] + (leftB[3][2]/2))/2;
 				var textX0 = (leafM + leftB[3][3])/2;
 				var textY0 = (leafY + leftB[3][1])/2;
 				ctx.fillText('0', textX0-8, textY0+10);
