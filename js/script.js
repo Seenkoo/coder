@@ -2,7 +2,9 @@ function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
 $(document).ready(function(){
+	var resPlaceholder = $("#result").html();
 	$("#calc").on("click", function(){
+		$("#result").html(resPlaceholder);
 		var text = $("#text").val();
 		var alphabet = text.split("").filter(onlyUnique);
 		var n = text.length;
@@ -10,7 +12,11 @@ $(document).ready(function(){
 		var alphabetFreq = [];
 		var sortedDesc = [];
 		for (var i = 0; i <= alphabet.length - 1; i++) {
-			var symbolRegex = '['+alphabet[i]+']';
+			// var symbolRegex = '['+alphabet[i]+']';
+			var symbolRegex = alphabet[i];
+			symbolRegex = (function(str) {
+				return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+			})(symbolRegex);
 			alphabetFreq.push([alphabet[i],text.match(new RegExp(symbolRegex,'g')).length, '']);
 		};
 		sortedDesc = alphabetFreq.slice(0);
@@ -19,6 +25,12 @@ $(document).ready(function(){
 				return -1;
 			}
 			if(a[1] < b[1]){
+				return 1;
+			}
+			if(a[0] < b[0]){
+				return -1;
+			}
+			if(a[0] > b[0]){
 				return 1;
 			}
 			return 0;
@@ -112,7 +124,7 @@ $(document).ready(function(){
 		var a = 0;
 		shfano.forEach(function(value, index, array){
 			t += value[1]*(value[2].length);
-			$("#shannon-fano table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td></tr>');
+			$("#shannon-fano table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td><td class="weight">'+value[2].length+'</td></tr>');
 		});
 		a = (t/n).toFixed(3);
 
@@ -133,27 +145,66 @@ $(document).ready(function(){
 							return rv;
 							})(arr);
 			var encodedArr = arr.slice(0);
-			var leaves = [];
-			// ^CANVAS
 			var canvas = document.getElementById('tree');
-			canvas.width = m*30;
-			canvas.height = m*30;
+			canvas.width = arr.length*40;
+			canvas.height = Math.ceil((n/arr.length)+(arr[1][2].length) + 1)*125;
 			var ctx = canvas.getContext('2d');
-			ctx.font = "20px Trebuchet";
-			for (var i = 0; i <= sortedDesc.length - 1; i++) {
-				ctx.strokeRect((i*30)+3, canvas.height-50, 25, 50);sortedDesc[i]
-				ctx.fillText(sortedDesc[i][0], (i*30)+8, canvas.height-30);
-				ctx.fillText(sortedDesc[i][1], (i*30)+5, canvas.height-10);
+			var symSize = 20;
+			ctx.font = "bold 20px Trebuchet";
+			ctx.textAlign = "center";
+			for (var i = 0; i <= tree.length - 1; i++) {
+				var symX = (i*40);
+				var symY = canvas.height-50;
+				var symW = 40;
+				var symM = symX + (symW/2);
+				tree[i][3] = [symX, symY, symW, symM];
+				ctx.strokeRect(symX, symY, symW, 50);
+				ctx.fillText(tree[i][0], symX+(symW/2), symY+20);
+				ctx.fillText(tree[i][1], symX+(symW/2), symY+40);
 			};
-			// $CANVAS
+			var rows = [];
 			while(tree.length > 1){
 				var p1 = tree.pop();
 				var p2 = tree.pop();
-				var symbols = p1[0]+p2[0];
-				var weight = p1[1]+p2[1];
-				var leaf = [symbols, weight];
+				var leftB = (Math.min((p1[3][0]),(p2[3][0])) == p1[3][0])?(p1):(p2);
+				var rightB = (Math.max((p1[3][0]),(p2[3][0])) == p1[3][0])?(p1):(p2);
+				// [X, Y, W, M];
+
+				var leafSymbols = leftB[0]+rightB[0];
+				var leafWeight = p1[1]+p2[1];
+
+				var leafW = (((leafSymbols.length * symSize)/2) + leafSymbols.length*2);
+				// var leafX = (leftB[3][0] + ((rightB[3][0]-leftB[3][0])/2));
+				var leafX = leftB[3][3] + (rightB[3][3]-leftB[3][3])/4;
+				var leafY = Math.min(p1[3][1], p2[3][1]) - 50;
+				var leafM = leafX + (leafW/2);
+				var leafCoords = [leafX, leafY-50, leafW, leafM];
+				var leaf = [leafSymbols, leafWeight, 'code', leafCoords];
+
+				ctx.beginPath();
+				ctx.moveTo(leftB[3][3], leftB[3][1]);
+				ctx.lineTo(leafM, leafY);
+				ctx.closePath();
+				ctx.stroke();
+				// var textX0 = (leafX + (leafW/2) + leftB[3][0] + (leftB[3][2]/2))/2;
+				var textX0 = (leafM + leftB[3][3])/2;
+				var textY0 = (leafY + leftB[3][1])/2;
+				ctx.fillText('0', textX0-8, textY0+10);
+
+				ctx.beginPath();
+				ctx.moveTo(rightB[3][3], rightB[3][1]);
+				ctx.lineTo(leafM, leafY);
+				ctx.closePath();
+				ctx.stroke();
+				var textX1 = (leafM + rightB[3][3])/2;
+				var textY1 = (leafY + rightB[3][1])/2;
+				ctx.fillText('1', textX1-5, textY1+10);
+
+				ctx.strokeRect(leafX, leafY-50, leafW, 50);
+				ctx.fillText(leafSymbols, leafX+leafW/2, leafY-30);
+				ctx.fillText(leafWeight, leafX+leafW/2, leafY-10);
+
 				tree.push(leaf);
-				leaves.push(leaf);
 				tree.sort(function(a, b){
 					if(a[1] > b[1]){
 						return -1;
@@ -161,12 +212,24 @@ $(document).ready(function(){
 					if(a[1] < b[1]){
 						return 1;
 					}
+					if(a[0].length < b[0].length){
+						return -1;
+					}
+					if(a[0].length > b[0].length){
+						return 1;
+					}
+					if(a[0] < b[0]){
+						return -1;
+					}
+					if(a[0] > b[0]){
+						return 1;
+					}
 					return 0;
 				});
-				p1[0].split("").forEach(function(value, index, array){
+				leftB[0].split("").forEach(function(value, index, array){
 					encodedObj[value].code = "0" + encodedObj[value].code;
 				});
-				p2[0].split("").forEach(function(value, index, array){
+				rightB[0].split("").forEach(function(value, index, array){
 					encodedObj[value].code = "1" + encodedObj[value].code;
 				});
 			}
@@ -178,11 +241,13 @@ $(document).ready(function(){
 		var hman = huffman(sortedDesc, n);
 
 		// Выводим таблицу Хаффмана и считаем вес сообщения & средний вес символа
-		var t = 0;
-		var a = 0;
+		t = 0;
+		a = 0;
 		hman.forEach(function(value, index, array){
 			t += value[1]*(value[2].length);
-			$("#huffman table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td></tr>');
+			$("#huffman table tr").last().after('<tr><td class="symbol">'+value[0]+'</td><td class="freq">'+value[1]+'</td><td class="code">'+value[2]+'</td><td class="weight">'+value[2].length+'</td></tr>');
+			// $("#php_code").append("'"+value[0]+"' => '"+value[2]+"',<br>");
+			// $("#php_decode").append("'"+value[2]+"' => '"+value[0]+"',<br>");
 		});
 		a = (t/n).toFixed(3);
 
@@ -190,5 +255,6 @@ $(document).ready(function(){
 		$("#huffman b.a").text("Средний вес символа = " + a);
 
 		$("#huffman").removeClass("empty");
+		$("#huffman-tree").removeClass("empty");
 	});
 });
