@@ -148,7 +148,7 @@ $(document).ready(function(){
 			// Создаем холст
 			var canvas = document.getElementById('tree');
 			canvas.width = arr.length*40;
-			canvas.height = (arr.length + (arr.length%2) + 1)*50;
+			canvas.height = Math.ceil((n/arr.length)+(arr[1][2].length) + 1)*200;
 			var ctx = canvas.getContext('2d');
 			ctx.font = "bold 20px Trebuchet";
 			ctx.textAlign = "center";
@@ -162,7 +162,6 @@ $(document).ready(function(){
 				var leafL = 0;
 				var leafHeight = 50;
 				var leafS = ((i+1) < (arr.length/2))?('left'):('right');
-				var leafP = Math.abs(arr.length/2 - (i+1));
 				var leafText = arr[i][0];
 				var leafWeight = arr[i][1];
 				var leafSymSize = 20;
@@ -173,7 +172,6 @@ $(document).ready(function(){
 					Width: leafWidth,
 					M: leafM,
 					S: leafS,
-					P: leafP,
 					L: leafL,
 					Weight: leafWeight,
 					Text: leafText
@@ -184,11 +182,8 @@ $(document).ready(function(){
 				ctx.fillText(leafWeight, leafM, leafY + leafSymSize*2);
 			};
 
-			// var maxWeight = arr[0][1];
-			var maxWeight = 1;
-			var maxLevel = 0;
 			// Рисуем дерево и заполняем коды
-			leafSymSize = 18;
+			leafSymSize = 16;
 			leafHeight = 25;
 			ctx.font = "bold 16px Trebuchet";
 			while(tree.length > 1){
@@ -201,42 +196,23 @@ $(document).ready(function(){
 				leafWeight = left.Weight + right.Weight;
 				leafWidth = (leafText.length * leafSymSize)/2;
 				leafX = (left.M + right.M - leafWidth)/2;
+				leafL = Math.max(left.L, right.L) + 1;
 				leafM = leafX + (leafWidth/2);
 				leafS = (left.S == 'left')?('left'):('right');
 
-				if(left.S == 'right' && right.S == 'right'){
-					leafX = right.M-leafWidth;
-					leafM = leafX + (leafWidth/2);
-					leafS = 'right';
-					leafP = right.P;
-				}else if(left.S == 'left' && right.S == 'left'){
-					leafX = left.M;
-					leafM = leafX + (leafWidth/2);
-					leafS = 'left';
-					leafP = left.P;
-				}else if(left.S == 'left' && right.S == 'right'){
-					leafS = 'right';
-					leafP = right.P;
-				}else{
-					leafS = 'left';
-					leafP = left.P;
-				}
-
-				leafL = Math.max(left.L, right.L) + 1;
-				if(leafL > maxLevel){
-					maxLevel = leafL;
-				}
-				if(leafWeight > maxWeight){
-					maxWeight = leafWeight;
-				}
-				if(leafL < maxLevel && maxWeight == leafWeight){
-					leafL = maxLevel;
-				}
-
-				var decr = 30*leafL;
+				var delta = Math.abs(left.L - right.L);
+				var decr = 50;
 				leafY = Math.min(left.Y, right.Y) - decr;
 
 				// Определяем наклон
+				if(left.S == 'right' && right.S == 'right'){
+					leafY -= 50*leafL;
+				}else if(left.S == 'left' && right.S == 'left'){
+					leafY -= 50*leafL;
+				}else{
+					leafY -= 50*leafL;
+				}
+
 				var leaf =
 					{
 						X: leafX,
@@ -244,7 +220,6 @@ $(document).ready(function(){
 						Width: leafWidth,
 						M: leafM,
 						S: leafS,
-						P: leafP,
 						L: leafL,
 						Weight: leafWeight,
 						Text: leafText
