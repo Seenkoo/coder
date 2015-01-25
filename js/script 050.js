@@ -27,10 +27,10 @@ $(document).ready(function(){
 			if(a[1] < b[1]){
 				return 1;
 			}
-			if(a[0] < b[0]){
+			if(a[0][0] < b[0][0]){
 				return -1;
 			}
-			if(a[0] > b[0]){
+			if(a[0][0] > b[0][0]){
 				return 1;
 			}
 			return 0;
@@ -148,11 +148,16 @@ $(document).ready(function(){
 			// Создаем холст
 			var canvas = document.getElementById('tree');
 			canvas.width = arr.length*40;
-			canvas.height = Math.ceil((n/arr.length)+(arr[1][2].length) + 1)*200;
+			var canH = 100;
+			var rows = [];
+			for(var h = 0; h <= (Math.ceil(Math.log2(n))); h++){
+				canH += h*50;
+				rows.push([]);
+			}
+			canvas.height = canH;
 			var ctx = canvas.getContext('2d');
 			ctx.font = "bold 20px Trebuchet";
 			ctx.textAlign = "center";
-
 			// Создаем дерево объектов
 			for (var i = 0; i <= arr.length - 1; i++) {
 				var leafX = (i*40);
@@ -161,7 +166,6 @@ $(document).ready(function(){
 				var leafM = leafX + (leafWidth/2);
 				var leafL = 0;
 				var leafHeight = 50;
-				var leafS = ((i+1) < (arr.length/2))?('left'):('right');
 				var leafText = arr[i][0];
 				var leafWeight = arr[i][1];
 				var leafSymSize = 20;
@@ -171,7 +175,6 @@ $(document).ready(function(){
 					Y: leafY,
 					Width: leafWidth,
 					M: leafM,
-					S: leafS,
 					L: leafL,
 					Weight: leafWeight,
 					Text: leafText
@@ -182,10 +185,15 @@ $(document).ready(function(){
 				ctx.fillText(leafWeight, leafM, leafY + leafSymSize*2);
 			};
 
+			var Heights = [(canvas.height - 50)];
+			for(var l = 1; l <= (Math.ceil(Math.log2(n))); l++){
+				var levelH = Heights[l-1] - (l*50);
+				Heights.push(levelH);
+			}
 			// Рисуем дерево и заполняем коды
-			leafSymSize = 16;
-			leafHeight = 25;
-			ctx.font = "bold 16px Trebuchet";
+			leafSymSize = 22;
+			leafHeight = 35;
+			ctx.font = "bold 20px Trebuchet";
 			while(tree.length > 1){
 				var b1 = tree.pop();
 				var b2 = tree.pop();
@@ -194,32 +202,46 @@ $(document).ready(function(){
 
 				leafText = left.Text + right.Text;
 				leafWeight = left.Weight + right.Weight;
-				leafWidth = (leafText.length * leafSymSize)/2;
-				leafX = (left.M + right.M - leafWidth)/2;
-				leafL = Math.max(left.L, right.L) + 1;
-				leafM = leafX + (leafWidth/2);
-				leafS = (left.S == 'left')?('left'):('right');
+				leafWidth = (leafText.length * leafSymSize)/1.8;
 
-				var delta = Math.abs(left.L - right.L);
-				var decr = 50;
-				leafY = Math.min(left.Y, right.Y) - decr;
+				leafX = (left.M + right.M - leafWidth)/2;
+
+				leafL = Math.ceil(Math.log2(leafWeight));
+
+
+				var collision = true;
+				while(collision && rows[leafL].length > 0){
+					var leafEnd = leafX + leafWidth;
+					for (var r = 0; r < rows[leafL].length; r++) {
+						if(leafX <= (rows[leafL][r].end + 5)  && leafX >= rows[leafL][r].start){
+							leafX = rows[leafL][r].end + 20;
+							collision = true;
+							break
+						}
+						if(leafEnd >= (rows[leafL][r].start + 5) && leafX <= rows[leafL][r].start){
+							leafX = rows[leafL][r].start - leafWidth - 5;
+							collision = true;
+							break;
+						}
+						collision = false;
+					};
+				}
+				leafM = leafX + (leafWidth/2);
+				// Кидаем координаты листа в массив ряда
+				rows[leafL].push({
+					start: leafX,
+					end: (leafX+leafWidth)
+				});
+
+				leafY = Heights[leafL];
 
 				// Определяем наклон
-				if(left.S == 'right' && right.S == 'right'){
-					leafY -= 50*leafL;
-				}else if(left.S == 'left' && right.S == 'left'){
-					leafY -= 50*leafL;
-				}else{
-					leafY -= 50*leafL;
-				}
-
 				var leaf =
 					{
 						X: leafX,
-						Y: (leafY-25),
+						Y: (leafY-leafHeight),
 						Width: leafWidth,
 						M: leafM,
-						S: leafS,
 						L: leafL,
 						Weight: leafWeight,
 						Text: leafText
@@ -227,54 +249,84 @@ $(document).ready(function(){
 
 				// Рисуем линию от левого блока
 				ctx.beginPath();
-				ctx.moveTo(left.X + left.Width*0.25, left.Y);
-				ctx.lineTo(leafX, leafY);
+				// ctx.moveTo(left.X + left.Width*0.25, left.Y);
+				// ctx.moveTo(left.X, left.Y);
+				ctx.moveTo(left.M, left.Y);
+				ctx.lineTo(leafM, leafY);
 				ctx.closePath();
 				ctx.stroke();
 				// Ставим 0 на середине линии
-				var leftTextX = (left.X + left.Width*0.25 + leafX)/2;
+				// var leftTextX = (left.X + left.Width*0.25 + leafM)/2;
+				var leftTextX = (left.M + leafM)/2;
 				var leftTextY = (leafY + left.Y)/2;
 				ctx.fillText('0', leftTextX - (leafSymSize/2), leftTextY + (leafSymSize*0.6));
 
 				// Рисуем линию от правого блока
 				ctx.beginPath();
-				ctx.moveTo(right.X + right.Width*0.75, right.Y);
-				ctx.lineTo(leafX + leafWidth, leafY);
+				// ctx.moveTo(right.X + right.Width*0.75, right.Y);
+				// ctx.moveTo(right.X + right.Width, right.Y);
+				ctx.moveTo(right.M, right.Y);
+				ctx.lineTo(leafM, leafY);
 				ctx.closePath();
 				ctx.stroke();
 				// Ставим 1 на середине линии
-				var rightTextX = (right.X + right.Width*0.75 + leafX + leafWidth)/2;
+				// var rightTextX = (right.X + right.Width*0.75 + leafM)/2;
+				var rightTextX = (right.M + leafM)/2;
 				var rightTextY = (leafY + right.Y)/2;
-				ctx.fillText('1', rightTextX - (leafSymSize/3), rightTextY + (leafSymSize*0.6));
+				ctx.fillText('1', rightTextX - (leafSymSize/5), rightTextY + (leafSymSize*0.6));
 
 				// Рисуем новый блок
-				ctx.strokeRect(leafX, leafY-25, leafWidth, leafHeight);
+				ctx.strokeRect(leafX, leafY-leafHeight, leafWidth, leafHeight);
 				// Пишем в новый блок символы и вес
-				ctx.fillText(leafText, leafM, leafY - 15);
-				ctx.fillText(leafWeight, leafM, leafY - 2);
+				ctx.fillText(leafText, leafM, leafY - leafSymSize+2);
+				ctx.fillText(leafWeight, leafM, leafY - 1);
 
 				tree.push(leaf);
 				tree.sort(function(a, b){
+
+					// Меньше вес вверх
+					if(a.Weight < b.Weight){
+						return 1;
+					}
 					if(a.Weight > b.Weight){
 						return -1;
 					}
-					if(a.Weight < b.Weight){
+
+					// Больше уровень вверх
+					if(a.L > b.L){
+						return 1;
+					}
+					if(a.L < b.L){
+						return -1;
+					}
+					// Меньше длина вверх
+					if(a.Text.length > b.Text.length){
 						return 1;
 					}
 					if(a.Text.length < b.Text.length){
 						return -1;
 					}
-					if(a.Text.length > b.Text.length){
+
+					// Больше по алфавиту вверх
+					if(a.Text[0] > b.Text[0]){
 						return 1;
 					}
 					if(a.Text[0] < b.Text[0]){
 						return -1;
 					}
-					if(a.Text[0] > b.Text[0]){
-						return 1;
-					}
 					return 0;
 				});
+				/*if(tree.length > 2){
+					var el1 = tree[tree.length-1];
+					var el2 = tree[tree.length-2];
+					var el3 = tree[tree.length-3];
+					if(el1.Weight < el2.Weight && el2.Weight == el3.Weight){
+						if(el1.Text.length < el2.Text.length && el2.Text.length <= el3.Text.length){
+							tree = tree.slice(0, tree.length-3);
+							tree.push(el1, el3, el2);
+						}
+					}
+				}*/
 
 				// Записываем коды символов
 				left.Text.split("").forEach(function(value, index, array){

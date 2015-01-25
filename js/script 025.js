@@ -205,52 +205,37 @@ $(document).ready(function(){
 				leafWidth = (leafText.length * leafSymSize)/1.8;
 
 				leafX = (left.M + right.M - leafWidth)/2;
-				// leafX -= leafWidth/2;
 
 				leafL = Math.ceil(Math.log2(leafWeight));
-				leafY = Heights[leafL];
 
-				// Сдвиг коллизий
+
 				var collision = true;
-				var lastCollision = false;
 				while(collision && rows[leafL].length > 0){
 					var leafEnd = leafX + leafWidth;
 					for (var r = 0; r < rows[leafL].length; r++) {
-						var rSt = rows[leafL][r].start;
-						var rE = rows[leafL][r].end;
-						var rW = rows[leafL][r].width;
-
-						if ( (leafX <= (rE + leafWidth/4) && leafX >= rSt) || (leafX <= rSt && leafEnd >= (rSt - leafWidth/4)) ){
-							if(lastCollision){
-								lastCollision = 'right';
-							}
-							lastCollision = lastCollision || ((leafX <= (rE + leafWidth/4) && leafX >= rSt) ? 'right' : 'left');
-							switch (lastCollision) {
-								case 'left':
-									leafX = rSt - leafWidth - leafWidth/2;
-									break;
-								case 'right':
-									leafX = rE + leafWidth/2;
-									break;
-								default:
-									break;
-							}
+						if(leafX <= (rows[leafL][r].end + 5)  && leafX >= rows[leafL][r].start){
+							leafX = rows[leafL][r].end + 20;
+							collision = true;
+							break
+						}
+						if(leafEnd >= (rows[leafL][r].start + 5) && leafX <= rows[leafL][r].start){
+							leafX = rows[leafL][r].start - leafWidth - 5;
 							collision = true;
 							break;
 						}
 						collision = false;
 					};
 				}
-
 				leafM = leafX + (leafWidth/2);
 				// Кидаем координаты листа в массив ряда
 				rows[leafL].push({
 					start: leafX,
-					end: (leafX+leafWidth),
-					Y: leafY,
-					width: leafWidth
+					end: (leafX+leafWidth)
 				});
 
+				leafY = Heights[leafL];
+
+				// Определяем наклон
 				var leaf =
 					{
 						X: leafX,
@@ -262,6 +247,23 @@ $(document).ready(function(){
 						Text: leafText
 					}
 
+				// Рисуем линию от правого блока
+				ctx.beginPath();
+				// ctx.moveTo(right.X + right.Width*0.75, right.Y);
+				// ctx.moveTo(right.X + right.Width, right.Y);
+				ctx.moveTo(right.M, right.Y);
+				ctx.lineTo(leafM, leafY);
+				ctx.closePath();
+				ctx.stroke();
+				// Ставим 1 на середине линии
+				// var rightTextX = (right.X + right.Width*0.75 + leafM)/2;
+				// var rightTextX = (right.M + leafM)/2;
+				// var rightTextY = (leafY + right.Y)/2;
+				var rightTextX = leafM + (right.M - leafM)*0.25;
+				var rightTextY = leafY + (right.Y - leafY)/4;
+				ctx.fillText('1', rightTextX - (leafSymSize/5), rightTextY + (leafSymSize*0.6));
+
+
 				// Рисуем линию от левого блока
 				ctx.beginPath();
 				// ctx.moveTo(left.X + left.Width*0.25, left.Y);
@@ -271,29 +273,19 @@ $(document).ready(function(){
 				ctx.closePath();
 				ctx.stroke();
 				// Ставим 0 на середине линии
-				ctx.textBaseline = 'bottom';
-				ctx.textAlign = 'right';
-				ctx.fillText('0', left.M, left.Y);
-
-				// Рисуем линию от правого блока
-				ctx.beginPath();
-				ctx.moveTo(right.M, right.Y);
-				ctx.lineTo(leafM, leafY);
-				ctx.closePath();
-				ctx.stroke();
-				// Ставим 1 на середине линии
-				ctx.textBaseline = 'bottom';
-				ctx.textAlign = 'left';
-				ctx.fillText('1', right.M, right.Y);
+				// var leftTextX = (left.X + left.Width*0.25 + leafM)/2;
+				// var leftTextX = (left.M + leafM)/2;
+				var leftTextX = left.M + (leafM - left.M)*0.75;
+				// var leftTextY = (leafY + left.Y)/2;
+				// var leftTextY = leafY + (left.Y - leafY)/4;
+				var leftTextY = rightTextY;
+				ctx.fillText('0', leftTextX - (leafSymSize/2), leftTextY + (leafSymSize*0.6));
 
 				// Рисуем новый блок
 				ctx.strokeRect(leafX, leafY-leafHeight, leafWidth, leafHeight);
 				// Пишем в новый блок символы и вес
-				ctx.textAlign = 'center';
-				ctx.textBaseline = 'top';
-				ctx.fillText(leafText, leafM, (leafY-leafHeight)+1);
-				ctx.textBaseline = 'alphabetic';
-				ctx.fillText(leafWeight, leafM, leafY-2);
+				ctx.fillText(leafText, leafM, leafY - leafSymSize+2);
+				ctx.fillText(leafWeight, leafM, leafY - 1);
 
 				tree.push(leaf);
 				tree.sort(function(a, b){
