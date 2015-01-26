@@ -21,21 +21,21 @@ $(document).ready(function(){
 		};
 		sortedDesc = alphabetFreq.slice(0);
 		sortedDesc.sort(function(a, b){
-			if(a[1] > b[1]){
-				return -1;
-			}
 			if(a[1] < b[1]){
 				return 1;
 			}
-			if(a[0][0] < b[0][0]){
+			if(a[1] > b[1]){
 				return -1;
 			}
 			if(a[0][0] > b[0][0]){
 				return 1;
 			}
+			if(a[0][0] < b[0][0]){
+				return -1;
+			}
 			return 0;
 		});
-
+		console.log(sortedDesc);
 		// Выводим алфавит
 		var maxCols = 30;
 		var i = 15;
@@ -137,6 +137,7 @@ $(document).ready(function(){
 
 		function huffman(arr, n){
 			var tree = [];
+			var sortChosen = false;
 			var encodedObj = (function(arr){
 							var rv = {};
 							for (var i = 0; i < arr.length; i++){
@@ -195,6 +196,7 @@ $(document).ready(function(){
 			leafHeight = 35;
 			ctx.font = "bold 20px Trebuchet";
 			while(tree.length > 1){
+				var sortFunction;
 				var b1 = tree.pop();
 				var b2 = tree.pop();
 				var left = (Math.min(b1.X, b2.X) == b1.X)?(b1):(b2);
@@ -290,46 +292,94 @@ $(document).ready(function(){
 				ctx.strokeRect(leafX, leafY-leafHeight, leafWidth, leafHeight);
 				// Пишем в новый блок символы и вес
 				ctx.textAlign = 'center';
-				ctx.textBaseline = 'top';
-				ctx.fillText(leafText, leafM, (leafY-leafHeight)+1);
+				ctx.textBaseline = 'bottom';
+				ctx.fillText(leafText, leafM, (leafY-leafHeight/2));
 				ctx.textBaseline = 'alphabetic';
 				ctx.fillText(leafWeight, leafM, leafY-2);
 
 				tree.push(leaf);
-				tree.sort(function(a, b){
 
-					// Меньше вес вверх
-					if(a.Weight < b.Weight){
-						return 1;
-					}
-					if(a.Weight > b.Weight){
-						return -1;
-					}
+				if(!sortChosen){
+					switch($("#sortF").val()){
+						case 'cross':
+							sortFunction = function(a, b){
+								if(a.Weight < b.Weight){
+									return 1;
+								}
+								if(a.Weight > b.Weight){
+									return -1;
+								}
+								if(a.L < b.L){
+									return 1;
+								}
+								if(a.L > b.L){
+									return -1;
+								}
+								return 0;
+							}
+							break;
+						case 'jump':
+							sortFunction = function(a, b){
+								if(a.Weight < b.Weight){
+									return 1;
+								}
+								if(a.Weight > b.Weight){
+									return -1;
+								}
+								if(a.L < b.L){
+									return 1;
+								}
+								if(a.L > b.L){
+									return -1;
+								}
+								if(a.Text.length > b.Text.length){
+									return 1;
+								}
+								if(a.Text.length < b.Text.length){
+									return -1;
+								}
+								return 0;
+							}
+							break;
+						case 'mixed':
+							sortFunction = function(a, b){
+								if(a.Weight < b.Weight){
+									return 1;
+								}
+								if(a.Weight > b.Weight){
+									return -1;
+								}
 
-					// Больше уровень вверх
-					if(a.L > b.L){
-						return 1;
-					}
-					if(a.L < b.L){
-						return -1;
-					}
-					// Меньше длина вверх
-					if(a.Text.length > b.Text.length){
-						return 1;
-					}
-					if(a.Text.length < b.Text.length){
-						return -1;
-					}
+								if(a.L > b.L){
+									return 1;
+								}
+								if(a.L < b.L){
+									return -1;
+								}
 
-					// Больше по алфавиту вверх
-					if(a.Text[0] > b.Text[0]){
-						return 1;
+								if(a.Text.length > b.Text.length){
+									return 1;
+								}
+								if(a.Text.length < b.Text.length){
+									return -1;
+								}
+
+								if(a.Text[0] > b.Text[0]){
+									return 1;
+								}
+								if(a.Text[0] < b.Text[0]){
+									return -1;
+								}
+
+								return 0;
+							}
+							break;
+						default:
+							break;
 					}
-					if(a.Text[0] < b.Text[0]){
-						return -1;
-					}
-					return 0;
-				});
+					sortChosen = true;
+				}
+				tree.sort(sortFunction);
 
 				// Записываем коды символов
 				left.Text.split("").forEach(function(value, index, array){
